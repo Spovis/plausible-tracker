@@ -295,6 +295,11 @@ export default function Plausible(
     function trackClick(this: HTMLAnchorElement, event: MouseEvent) {
       trackEvent('Outbound Link: Click', { props: { url: this.href } });
 
+      // allow clicks on new tab to use the default behavior
+      if (this.target === '_blank') {
+        return;
+      }
+
       /* istanbul ignore next */
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
