@@ -39,7 +39,8 @@ export type EventOptions = {
 export function sendEvent(
   eventName: string,
   data: Required<PlausibleOptions>,
-  options?: EventOptions
+  options?: EventOptions,
+  sendWithBeacon: boolean = false,
 ): void {
   const isLocalhost =
     /^localhost$|^127(?:\.[0-9]+){0,2}\.[0-9]+$|^(?:0*:)*?:?0*1$/.test(
@@ -72,15 +73,19 @@ export function sendEvent(
     p: options && options.props ? JSON.stringify(options.props) : undefined,
   };
 
-  const req = new XMLHttpRequest();
-  req.open('POST', `${data.apiHost}/api/event`, true);
-  req.setRequestHeader('Content-Type', 'text/plain');
-  req.send(JSON.stringify(payload));
-  // eslint-disable-next-line functional/immutable-data
-  req.onreadystatechange = () => {
-    if (req.readyState !== 4) return;
-    if (options && options.callback) {
-      options.callback({ status: req.status });
-    }
-  };
+  if (sendWithBeacon) {
+    navigator.sendBeacon(`${data.apiHost}/api/event`, JSON.stringify(payload));
+  } else {
+    const req = new XMLHttpRequest();
+    req.open('POST', `${data.apiHost}/api/event`, true);
+    req.setRequestHeader('Content-Type', 'text/plain');
+    req.send(JSON.stringify(payload));
+    // eslint-disable-next-line functional/immutable-data
+    req.onreadystatechange = () => {
+      if (req.readyState !== 4) return;
+      if (options && options.callback) {
+        options.callback({ status: req.status });
+      }
+    };
+  }
 }

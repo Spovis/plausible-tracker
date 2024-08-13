@@ -84,7 +84,8 @@ export type PlausibleOptions = PlausibleInitOptions & PlausibleEventData;
 type TrackEvent = (
   eventName: string,
   options?: EventOptions,
-  eventData?: PlausibleOptions
+  eventData?: PlausibleOptions,
+  sendWithBeacon?: boolean
 ) => void;
 
 /**
@@ -240,8 +241,8 @@ export default function Plausible(
     ...defaults,
   });
 
-  const trackEvent: TrackEvent = (eventName, options, eventData) => {
-    sendEvent(eventName, { ...getConfig(), ...eventData }, options);
+  const trackEvent: TrackEvent = (eventName, options, eventData, sendWithBeacon = false) => {
+    sendEvent(eventName, { ...getConfig(), ...eventData }, options, sendWithBeacon);
   };
 
   modifyWindow();
@@ -293,20 +294,14 @@ export default function Plausible(
     }
   ) => {
     function trackClick(this: HTMLAnchorElement, event: MouseEvent) {
-      trackEvent('Outbound Link: Click', { props: { url: this.href } });
-
-      // allow clicks on new tab to use the default behavior
-      if (this.target === '_blank') {
-        return;
-      }
-
-      /* istanbul ignore next */
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      trackEvent('Outbound Link: Click', { props: { url: this.href } }, {}, true);
       if (
         !(
+          // @ts-ignore
           typeof process !== 'undefined' &&
+          // @ts-ignore
           process &&
+          // @ts-ignore
           process.env.NODE_ENV === 'test'
         )
       ) {
